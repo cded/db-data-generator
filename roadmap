@@ -3,3 +3,5 @@ Iterate through rows
 Validate constraints
 Useful logging with extract columns
 Try other models - llama
+Make it parallel with threads
+How to deal better with FKs

@@ -53,13 +53,13 @@ def generate_insert_statements(table_columns):
 def generate_insert_statement_from_ai(sql_content):
     logging.info(f"Generating INSERT Statements for table {sql_content}")
     prompt = (
-        f"Generate me random fake data for the following table:"
+        f"Generate me random fake data for the following tables:"
         f"{sql_content}"
         f"Make it into insert statements and give me only the insert statements in your response."
         f"Format it as:"
         f"INSERT into..."
         f"Values (...)"
-        f"Values (...)"
+        f"(...)"
         f"Make 10 statements"
     )
     res = requests.get(f"https://api.freegpt4.ddns.net/?text={prompt}")
@@ -69,20 +69,27 @@ def generate_insert_statement_from_ai(sql_content):
 
 
 if __name__ == "__main__":
-    sql_content = """
-        create table "address" (
-            "customer_id" bigint,
-            "id" bigint not null,
-            "address_line" varchar(255),
-            "city" varchar(255), 
-            "coordinates" varchar(255),
-            "country" varchar(255),
-            "postal_code" varchar(255),
-            "street_number" varchar(255),
-            "unit_number" varchar(255), 
-            primary key ("id"),
-            foreign key ("customer_id") references "customer"
-        );
-        """
+    file_path = './my-schema.sql'
+    sql_content = []
+    with open(file_path, 'r') as sql_file:
+        for line in sql_file:
+            sql_content.append(line)
+    print(sql_content)
 
     insert_statement = generate_insert_statement_from_ai(sql_content)
+
+    # sql_content = """
+    #     create table "address" (
+    #         "customer_id" bigint,
+    #         "id" bigint not null,
+    #         "address_line" varchar(255),
+    #         "city" varchar(255),
+    #         "coordinates" varchar(255),
+    #         "country" varchar(255),
+    #         "postal_code" varchar(255),
+    #         "street_number" varchar(255),
+    #         "unit_number" varchar(255),
+    #         primary key ("id"),
+    #         foreign key ("customer_id") references "customer"
+    #     );
+    #     """
