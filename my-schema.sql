@@ -1,3 +1,4 @@
+create table "product" ("price" float(53) not null, "category_id" bigint, "id" bigserial not null, "menu_id" bigint, "description" varchar(255), "name" varchar(255), primary key ("id"));
 create table "address" ("id" bigint not null, "address_line" varchar(255), "city" varchar(255), "coordinates" varchar(255), "country" varchar(255), "postal_code" varchar(255), "street_number" varchar(255), "unit_number" varchar(255), primary key ("id"));
 create table "billing_info" ("id" bigserial not null, "order_id" bigint unique, "credit_card_number" varchar(255), primary key ("id"));
 create table "customer" ("user_id" bigint not null, primary key ("user_id"));
@@ -8,7 +9,6 @@ create table "menu" ("category_id" bigint, "id" bigserial not null, "restaurant_
 create table "order" ("customer_id" bigint, "delivery_id" bigint unique, "id" bigserial not null, "order_date" timestamp(6), "restaurant_id" bigint, "order_status" varchar(255), primary key ("id"));
 create table "order_item" ("quantity" integer not null, "id" bigserial not null, "order_id" bigint, "product_id" bigint, primary key ("id"));
 create table "payment_transaction" ("amount" numeric(38,2), "id" bigserial not null, "order_id" bigint unique, "payment_gateway" varchar(255), primary key ("id"));
-create table "product" ("price" float(53) not null, "category_id" bigint, "id" bigserial not null, "menu_id" bigint, "description" varchar(255), "name" varchar(255), primary key ("id"));
 create table "product_category" ("id" bigserial not null, "name" varchar(255), primary key ("id"));
 create table "product_image" ("id" bigserial not null, "product_id" bigint, "image_url" varchar(255), primary key ("id"));
 create table "restaurant" ("address_id" bigint unique, "id" bigint not null, "name" varchar(255), "operating_hours" varchar(255), "phone_number" varchar(255), primary key ("id"));

@@ -1,8 +1,16 @@
 import re
-import requests
 import logging
+from dotenv import load_dotenv
+import os
+import google.generativeai as genai
+
+load_dotenv()
+
 
 logging.basicConfig(level=logging.NOTSET)
+
+genai.configure(api_key=os.environ['GEMINI_API_KEY'])
+model = genai.GenerativeModel('gemini-pro')
 
 
 def extract_table_columns(sql_content):
@@ -50,7 +58,15 @@ def generate_insert_statements(table_columns):
             f"INSERT INTO {table_name} ({', '.join(columns)}) VALUES ({values_placeholder});")
 
 
-def generate_insert_statement_from_ai(sql_content):
+def extract_inserts(response):
+    sql_pattern = re.compile(r'```sql(.*?)```', re.DOTALL)
+    sql_matches = sql_pattern.findall(response)
+    return sql_matches
+
+
+def generate_insert_statement_from_ai(sql_content: str):
+    if not sql_content.lower().startswith('create table'):
+        return
     logging.info(f"Generating INSERT Statements for table {sql_content}")
     prompt = (
         f"Generate me random fake data for the following tables:"
@@ -61,10 +77,25 @@ def generate_insert_statement_from_ai(sql_content):
         f"Values (...)"
         f"(...)"
         f"Make 10 statements"
+        f"Note that bigserial is a number. Each row table has an id."
     )
-    res = requests.get(f"https://api.freegpt4.ddns.net/?text={prompt}")
-    print(res)
-    print(res.text)
+
+    response = model.generate_content(prompt)
+    sql_inserts = ""
+    try:
+        sql_inserts = extract_inserts(response.text)
+    except:
+        print("EXCEPTTTT.....")
+        print(response)
+        sql_inserts = extract_inserts(
+            response.candidates[0].content.parts)
+
+    # Write the extracted SQL statements to a file
+    output_file_path = 'extracted_sql_statements.sql'
+    with open(output_file_path, 'a') as output_file:
+        for sql_statement in sql_inserts:
+            output_file.write(sql_statement.strip())
+
     return ''
 
 
@@ -73,23 +104,4 @@ if __name__ == "__main__":
     sql_content = []
     with open(file_path, 'r') as sql_file:
         for line in sql_file:
-            sql_content.append(line)
-    print(sql_content)
-
-    insert_statement = generate_insert_statement_from_ai(sql_content)
-
-    # sql_content = """
-    #     create table "address" (
-    #         "customer_id" bigint,
-    #         "id" bigint not null,
-    #         "address_line" varchar(255),
-    #         "city" varchar(255),
-    #         "coordinates" varchar(255),
-    #         "country" varchar(255),
-    #         "postal_code" varchar(255),
-    #         "street_number" varchar(255),
-    #         "unit_number" varchar(255),
-    #         primary key ("id"),
-    #         foreign key ("customer_id") references "customer"
-    #     );
-    #     """
+            generate_insert_statement_from_ai(line)

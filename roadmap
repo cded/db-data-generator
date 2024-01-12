@@ -1,3 +1,4 @@
+Dec 28
 Read from .sql file
 Iterate through rows
 Validate constraints
@@ -5,3 +6,13 @@ Useful logging with extract columns
 Try other models - llama
 Make it parallel with threads
 How to deal better with FKs
+
+Jan 12
+Some rows don't have ids
+
+- Make it parallel with threads
+  How to deal better with FKs
+
+* less important
+  Validate constraints
+  Useful logging with extract columns
