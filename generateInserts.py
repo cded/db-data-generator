@@ -3,6 +3,7 @@ import logging
 from dotenv import load_dotenv
 import os
 import google.generativeai as genai
+import asyncio
 
 load_dotenv()
 
@@ -64,13 +65,14 @@ def extract_inserts(response):
     return sql_matches
 
 
-def generate_insert_statement_from_ai(sql_content: str):
+async def generate_insert_statement_from_ai(sql_content: str):
     if not sql_content.lower().startswith('create table'):
+        logging.error("Not a valid SQL statement")
         return
     logging.info(f"Generating INSERT Statements for table {sql_content}")
     prompt = (
-        f"Generate me random fake data for the following tables:"
         f"{sql_content}"
+        f"Generate me random fake data for the following tables:"
         f"Make it into insert statements and give me only the insert statements in your response."
         f"Format it as:"
         f"INSERT into..."
@@ -80,28 +82,41 @@ def generate_insert_statement_from_ai(sql_content: str):
         f"Note that bigserial is a number. Each row table has an id."
     )
 
-    response = model.generate_content(prompt)
-    sql_inserts = ""
+    response = await model.generate_content_async(prompt)
+
+    sql_inserts = []
     try:
         sql_inserts = extract_inserts(response.text)
     except:
-        print("EXCEPTTTT.....")
-        print(response)
+        logging.info(f"Multiple candidates found")
         sql_inserts = extract_inserts(
             response.candidates[0].content.parts)
 
-    # Write the extracted SQL statements to a file
-    output_file_path = 'extracted_sql_statements.sql'
-    with open(output_file_path, 'a') as output_file:
-        for sql_statement in sql_inserts:
-            output_file.write(sql_statement.strip())
+    return sql_inserts
 
-    return ''
+
+def write_queries_to_file(file_path, queries):
+    with open(file_path, 'a') as output_file:
+        for query in queries:
+            output_file.write(query.strip())
+
+
+async def main():
+    input_file_path = './my-schema.sql'
+    output_file_path = 'extracted_sql_statements.sql'
+
+    result_queries = []
+
+    with open(input_file_path, 'r') as sql_file:
+        corouts = [generate_insert_statement_from_ai(
+            line) for line in sql_file]
+        for coro in asyncio.as_completed(corouts):
+            result = await coro
+            if result:
+                result_queries.extend(result)
+
+    write_queries_to_file(output_file_path, result_queries)
 
 
 if __name__ == "__main__":
-    file_path = './my-schema.sql'
-    sql_content = []
-    with open(file_path, 'r') as sql_file:
-        for line in sql_file:
-            generate_insert_statement_from_ai(line)
+    asyncio.run(main())
